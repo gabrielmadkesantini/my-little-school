@@ -10,17 +10,6 @@ app.use(cors());
 
 import qrcode from "qrcode";
 
-app.get("/set-cookie", (req, res) => {
-  const token = "my-random-token"; // substitua com um valor aleatório gerado dinamicamente
-
-  res.cookie("token", token, {
-    httpOnly: true,
-    maxAge: 1 * 60 * 60 * 1000, // tempo de expiração do cookie em milissegundos (24 horas neste caso)
-  });
-
-  res.send("Cookie definido com sucesso!");
-});
-
 app.get("/student", async (req, res) => {
   const students = await prisma.student.findMany({
     include: {
