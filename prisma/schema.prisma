@@ -1,0 +1,43 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model Class {
+  id       Int       @id @default(autoincrement())
+  name     String    @unique
+  course   Course     @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  courseId Int
+  students Student[]
+}
+
+model Student {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  birthDate DateTime
+  qrCode    String
+  photo     String
+
+  classId   Int
+  class     Class    @relation(fields: [classId], references: [id], onDelete: Cascade)
+}
+
+model Course {
+  id   Int    @id @default(autoincrement())
+  name String @unique
+
+  educationLevel   EducationLevel @relation(fields: [educationLevelId], references: [id], onDelete: Cascade)
+  educationLevelId Int
+
+  classes   Class[]
+}
+
+model EducationLevel {
+  id     Int      @id @default(autoincrement())
+  name   String   @unique
+  courses   Course[]
+}
