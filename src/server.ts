@@ -31,7 +31,7 @@ app.get("/student/:id", async (req, res) => {
 
 app.put("/student/:id", async (req, res) => {
   const { id } = req.params;
-  const { name, birthDate, photo } = req.body;
+  const { name, birthDate, photo, classId } = req.body;
   await prisma.student.update({
     where: {
       id: Number(id),
@@ -40,6 +40,7 @@ app.put("/student/:id", async (req, res) => {
       name,
       birthDate,
       photo,
+      classId,
     },
   });
   return res.status(200).json({ message: "Student updated" });
@@ -62,6 +63,10 @@ app.delete("/student/:id", async (req, res) => {
   });
 });
 
+async function generateQRCode(name: string) {
+  return await qrcode.toDataURL(`http://localhost:5173/public/student/${name.replace(" ", "-").toLowerCase()}`);
+}
+
 app.post("/student", async (req, res) => {
   const { name, birthDate, photo, classId } = req.body;
 
@@ -79,16 +84,9 @@ app.post("/student", async (req, res) => {
     return res.status(409).json({ message: "Student already exists" });
   }
 
-  let qrCode = "";
+  const qrCode = await generateQRCode(name);
 
-  qrcode.toDataURL(
-    `http://localhost:5173/public/student/${(name as string).toLowerCase()}`,
-    function (err, url) {
-      qrCode = url;
-    },
-  );
-
-  const studentCreated = await prisma.student.create({
+  await prisma.student.create({
     data: {
       name,
       birthDate,
@@ -102,13 +100,7 @@ app.post("/student", async (req, res) => {
     },
   });
 
-  return res.status(201).json({
-    student: {
-      id: studentCreated.id,
-      name: studentCreated.name,
-      qrCode: studentCreated.qrCode
-    },
-  });
+  return res.status(201).json();
 });
 
 // Class
@@ -116,8 +108,9 @@ app.post("/student", async (req, res) => {
 app.get("/class", async (req, res) => {
   const classes = await prisma.class.findMany({
     include: {
-      students: true
-    }
+      students: true,
+      course: true,
+    },
   });
   return res.json(classes);
 });
@@ -196,6 +189,18 @@ app.get("/course/:id/class", async (req, res) => {
   const classes = await prisma.class.findMany({
     where: {
       courseId: Number(id),
+    },
+  });
+  return res.json(classes);
+});
+
+app.get("/course/name/:name/class", async (req, res) => {
+  const { name } = req.params;
+  const classes = await prisma.class.findMany({
+    where: {
+      course: {
+        name,
+      },
     },
   });
   return res.json(classes);
