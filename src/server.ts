@@ -28,6 +28,29 @@ app.get("/student/:id", async (req, res) => {
   });
   return res.json(student);
 });
+app.get("/student/name/:name", async (req, res) => {
+  const { name } = req.params;
+  const student = await prisma.student.findUnique({
+    where: {
+      name,
+    },
+    include: {
+      class: {
+        include: {
+          course: {
+            select: {
+              name: true
+            }
+          }
+        }
+      },
+    }
+  });
+  if (!student) {
+    return res.status(404).json({ message: "Student not found" });
+  }
+  return res.status(200).json(student);
+});
 
 app.put("/student/:id", async (req, res) => {
   const { id } = req.params;
@@ -61,10 +84,11 @@ app.delete("/student/:id", async (req, res) => {
       id: Number(id),
     },
   });
+  return res.status(200).json({ message: "Student deleted" })
 });
 
 async function generateQRCode(name: string) {
-  return await qrcode.toDataURL(`http://localhost:5173/public/student/${name.replace(" ", "-").toLowerCase()}`);
+  return await qrcode.toDataURL(`http://localhost:5173/student-card/${name}`);
 }
 
 app.post("/student", async (req, res) => {
